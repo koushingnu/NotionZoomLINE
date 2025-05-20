@@ -1,27 +1,34 @@
 import axios from "axios";
 
+// ユーザーごとにトークンを設定
 const users = {
   1: {
     name: "こーしん",
     zoomUrl:
       "https://us04web.zoom.us/j/7804620619?pwd=52OZdijaJbqa4SVg9Ebu3IoaaKbAk1.1",
+    token: "tok_koushin_123", // ★好きなランダム英数字でOK
   },
   2: {
     name: "えいちゃん",
     zoomUrl:
       "https://us05web.zoom.us/j/6604570017?pwd=Dfh0a2HUCzCdMKEkXQqio9BYbauRGi.1",
+    token: "tok_eichan_456",
   },
   3: {
     name: "こーせい",
     zoomUrl: "https://zoom.us/j/ZOOM_ID_C",
+    token: "tok_kousei_789",
   },
 };
 
 export async function GET(req) {
   const { searchParams } = new URL(req.url);
   const user = searchParams.get("user");
-  if (!user || !users[user]) {
-    return new Response("ユーザー未指定または無効です", { status: 400 });
+  const token = searchParams.get("token");
+
+  // トークン認証チェック
+  if (!user || !token || !users[user] || users[user].token !== token) {
+    return new Response("このページにはアクセスできません。", { status: 403 });
   }
 
   // LINE通知
@@ -33,7 +40,7 @@ export async function GET(req) {
         messages: [
           {
             type: "text",
-            text: `【${users[user].name}】がZoomを立ち上げました！`,
+            text: `【${users[user].name}】がZoomを立ち上げました！\n${users[user].zoomUrl}`,
           },
         ],
       },
@@ -45,7 +52,7 @@ export async function GET(req) {
       }
     );
   } catch (e) {
-    // エラーは黙って通す（通知だけ失敗でもZoomには飛ぶ）
+    // 通知だけ失敗でもZoomには飛ばす
   }
 
   // Zoomリダイレクト
